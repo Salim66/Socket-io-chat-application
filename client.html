@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Application</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
+    <style>
+        body {
+            background-color: #e9e9e9;
+        }
+        .card-box img {
+            width: 60px;
+            height: 60px;
+            border: 1px solid skyblue;
+            border-radius: 50%;
+        }
+
+        .message {
+            margin-left: 20px;
+            line-height: 5px;
+            background-color: #e9e9e9;
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+
+        .message h3 {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .message p {
+            font-size: 14px;
+            font-weight: 400;
+            margin-bottom: 0px;
+        }
+
+        .card-box:last-child {
+            animation: chat .3s ease-in;
+        }
+
+        @keyframes chat {
+            0% {
+                transform: translate(0px, 40px);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(0px, 0px);
+                opacity: 1;
+            }
+        }
+    </style>
+    
+</head>
+<body>
+    
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-md-8">
+                <audio src="./message.mp3" id="message_sound"></audio>
+                <div class="card">
+                    <div class="card-body" id="chat">
+
+                    </div>
+                    <div class="card-footer">
+                        <div class="input-group">
+                            <input id="msg" type="text"  class="form-control" placeholder="Message">
+                            <button type="button" id="btn" class="btn btn-primary">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        socket.on('latestChat', (data) => {
+            let client = JSON.parse(localStorage.getItem('client'));
+            let chat = '';
+            data.forEach(val => {
+                if(client.name == val.name){
+                    chat += `
+                        <div class="card-box d-flex flex-row justify-content-end mb-3">
+                            <div class="message me-3">
+                                <h3>${ val.name }</h3>
+                                <p>${ val.msg }</p>
+                            </div>
+                            <img src=${ val.photo } alt="">
+                        </div>
+                    `;
+                }else {
+                    document.getElementById('message_sound').play();
+                    chat += `
+                        <div class="card-box d-flex flex-row mb-3">
+                            <img src=${ val.photo } alt="">
+                            <div class="message">
+                                <h3>${ val.name }</h3>
+                                <p>${ val.msg }</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+            });
+            console.log(data);
+            document.getElementById('chat').innerHTML = chat;
+        })
+
+        document.getElementById('btn').onclick = (e) => {
+            e.preventDefault();
+            let data = JSON.parse(localStorage.getItem('client'));
+            let name = data.name;
+            let photo = data.photo;
+            let msg = document.getElementById('msg').value;
+
+            // console.log(name + " " + photo + " " +msg);
+
+
+            socket.emit('chat', { name, photo, msg });
+            document.getElementById('msg').value = '';
+        }
+        
+    </script>
+</body>
+</html>
